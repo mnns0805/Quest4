@@ -83,5 +83,4 @@ void AQCharacter::Look(const FInputActionValue& Value)
 	
 	AddActorLocalRotation(FRotator(0.0f,FinalYaw,0.0f));	
 	SpringArmComponent->AddLocalRotation(FRotator(FinalPitch,0.0f,0.0f));
-	
 }
