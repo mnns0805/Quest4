@@ -1,11 +1,11 @@
 ﻿#include "QCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "MaterialHLSLTree.h"
 #include "QPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-
 
 AQCharacter::AQCharacter()
 {
@@ -14,17 +14,18 @@ AQCharacter::AQCharacter()
 	CapsuleComponent->SetupAttachment(RootComponent);
 	CapsuleComponent->SetSimulatePhysics(false);
 	
-	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("SkeletalMesh");
-	SkeletalMeshComponent->SetupAttachment(CapsuleComponent);
-	SkeletalMeshComponent->SetSimulatePhysics((false));
+	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
+	StaticMeshComponent->SetupAttachment(CapsuleComponent);
+	StaticMeshComponent->SetSimulatePhysics((false));
 	
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArmComponent->SetupAttachment(CapsuleComponent);
-	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->bUsePawnControlRotation = false;
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("Camera");
-	CameraComponent->SetupAttachment(SpringArmComponent);
+	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
 	CameraComponent->bUsePawnControlRotation = false;
+	
 	
 }
 
@@ -53,29 +54,34 @@ void AQCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	}
 }
 
+void AQCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
 
 void AQCharacter::Move(const FInputActionValue& Value)
 {
 	if (Controller == nullptr) return;
 	const FVector2D MoveInput = Value.Get<FVector2D>();
-	FRotator TagetRotation = FRotator(0,GetControlRotation().Yaw,GetControlRotation().Roll);
 	
-	if (!FMath::IsNearlyZero(MoveInput.X))
-	{
-		FVector ForwardDirection = TagetRotation.RotateVector(FVector::ForwardVector);
-		AddMovementInput(ForwardDirection, MoveInput.X);
-	}	
+	float Delta = GetWorld()->GetDeltaSeconds();
 	
-	if (!FMath::IsNearlyZero(MoveInput.Y))
-	{
-		FVector RightDirection = TagetRotation.RotateVector(FVector::RightVector);;
-		AddMovementInput(RightDirection, MoveInput.Y);
-	}
+	FVector ForwardDirection = FVector::ForwardVector * MoveInput.X * Delta * MoveSpeed;
+	FVector RightDirection = FVector::RightVector * MoveInput.Y * Delta * MoveSpeed;
+	FVector FinalMove = ForwardDirection + RightDirection;
+	
+	AddActorLocalOffset(FinalMove);
 }
 
 void AQCharacter::Look(const FInputActionValue& Value)
 {
-	FVector2D LookInput = Value.Get<FVector2D>();
-	AddControllerYawInput(LookInput.X);
-	AddControllerPitchInput(LookInput.Y);
+	if (Controller == nullptr) return;
+	const FVector2D LookInput = Value.Get<FVector2D>();
+	
+	float FinalYaw = LookInput.X * MouseSensitivity;
+	float FinalPitch = LookInput.Y * MouseSensitivity;
+	
+	AddActorLocalRotation(FRotator(0.0f,FinalYaw,0.0f));	
+	SpringArmComponent->AddLocalRotation(FRotator(FinalPitch,0.0f,0.0f));
+	
 }

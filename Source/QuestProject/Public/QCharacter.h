@@ -18,16 +18,19 @@ public:
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(VisibleAnywhere, Category = "QCharacter|Component")
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
+	
 	UPROPERTY(VisibleAnywhere, Category = "QCharacter|Component")
-	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
+	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
+	
 	UPROPERTY(VisibleAnywhere, Category = "QCharacter|Component")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
+	
 	UPROPERTY(VisibleAnywhere, Category = "QCharacter|Component")
 	TObjectPtr<UCameraComponent> CameraComponent;
-	
 	
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
@@ -35,5 +38,9 @@ protected:
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 	
-
+	UPROPERTY(EditAnywhere, Category = "Move")
+	float MoveSpeed = 1000;
+	
+	UPROPERTY(EditAnywhere, Category = "Move")
+	float MouseSensitivity = 1.0f;
 };
